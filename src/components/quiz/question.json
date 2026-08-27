@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_quiz_questions",
+  "info": {
+    "displayName": "question"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text"
+    },
+    "options": {
+      "type": "json"
+    },
+    "correct_answer": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}
