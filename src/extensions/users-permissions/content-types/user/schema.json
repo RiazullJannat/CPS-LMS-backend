@@ -94,6 +94,12 @@
       "relation": "oneToMany",
       "target": "api::lesson-progress.lesson-progress",
       "mappedBy": "student"
+    },
+    "quiz_results": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::quiz-result.quiz-result",
+      "mappedBy": "student"
     }
   }
 }

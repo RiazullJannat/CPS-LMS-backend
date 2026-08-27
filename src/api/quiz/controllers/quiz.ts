@@ -24,6 +24,37 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
 
         return super.create(ctx);
     },
+    async find(ctx) {
+        const { data, meta } = await super.find(ctx);
+        const user = ctx.state.user;
+
+        if (user && user.userType === 'student') {
+            data.forEach((quiz: any) => {
+                if (quiz.questions) {
+                    quiz.questions = quiz.questions.map((q: any) => {
+                        const { correct_answer, ...rest } = q;
+                        return rest;
+                    });
+                }
+            });
+        }
+
+        return { data, meta };
+    },
+
+    async findOne(ctx) {
+        const { data, meta } = await super.findOne(ctx);
+        const user = ctx.state.user;
+
+        if (user && user.userType === 'student' && data && data.questions) {
+            data.questions = data.questions.map((q: any) => {
+                const { correct_answer, ...rest } = q;
+                return rest;
+            });
+        }
+
+        return { data, meta };
+    },
 
     async update(ctx) {
         const user = ctx.state.user;
