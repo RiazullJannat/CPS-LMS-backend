@@ -3,6 +3,7 @@
  */
 
 import { factories } from '@strapi/strapi';
+import { resolveNumericId } from '../../../utils/resolve-id';
 
 export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => ({
     async create(ctx) {
@@ -12,8 +13,8 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
         }
 
         if (user.userType === 'instructor') {
-            const courseId = ctx.request.body.data.course;
-            const course = await strapi.db.query('api::course.course').findOne({
+            const courseId = await resolveNumericId(strapi, 'api::course.course', ctx.request.body.data.course);
+            const course = courseId && await strapi.db.query('api::course.course').findOne({
                 where: { id: courseId },
                 populate: ['instructor'],
             });
@@ -63,8 +64,9 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
         }
 
         if (user.userType === 'instructor') {
-            const quiz = await strapi.db.query('api::quiz.quiz').findOne({
-                where: { id: ctx.params.id },
+            const quizId = await resolveNumericId(strapi, 'api::quiz.quiz', ctx.params.id);
+            const quiz = quizId && await strapi.db.query('api::quiz.quiz').findOne({
+                where: { id: quizId },
                 populate: ['course', 'course.instructor'],
             });
             if (!quiz || !quiz.course || !quiz.course.instructor || quiz.course.instructor.id !== user.id) {
@@ -82,8 +84,9 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
         }
 
         if (user.userType === 'instructor') {
-            const quiz = await strapi.db.query('api::quiz.quiz').findOne({
-                where: { id: ctx.params.id },
+            const quizId = await resolveNumericId(strapi, 'api::quiz.quiz', ctx.params.id);
+            const quiz = quizId && await strapi.db.query('api::quiz.quiz').findOne({
+                where: { id: quizId },
                 populate: ['course', 'course.instructor'],
             });
             if (!quiz || !quiz.course || !quiz.course.instructor || quiz.course.instructor.id !== user.id) {

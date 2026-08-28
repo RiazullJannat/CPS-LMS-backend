@@ -3,6 +3,7 @@
  */
 
 import { factories } from '@strapi/strapi';
+import { resolveNumericId } from '../../../utils/resolve-id';
 
 
 export default factories.createCoreController('api::lesson.lesson', ({ strapi }) => ({
@@ -13,8 +14,8 @@ export default factories.createCoreController('api::lesson.lesson', ({ strapi })
         }
 
         if (user.userType === 'instructor') {
-            const courseId = ctx.request.body.data.course;
-            const course = await strapi.db.query('api::course.course').findOne({
+            const courseId = await resolveNumericId(strapi, 'api::course.course', ctx.request.body.data.course);
+            const course = courseId && await strapi.db.query('api::course.course').findOne({
                 where: { id: courseId },
                 populate: ['instructor'],
             });
@@ -33,8 +34,9 @@ export default factories.createCoreController('api::lesson.lesson', ({ strapi })
         }
 
         if (user.userType === 'instructor') {
-            const lesson = await strapi.db.query('api::lesson.lesson').findOne({
-                where: { id: ctx.params.id },
+            const lessonId = await resolveNumericId(strapi, 'api::lesson.lesson', ctx.params.id);
+            const lesson = lessonId && await strapi.db.query('api::lesson.lesson').findOne({
+                where: { id: lessonId },
                 populate: ['course', 'course.instructor'],
             });
 
@@ -53,8 +55,9 @@ export default factories.createCoreController('api::lesson.lesson', ({ strapi })
         }
 
         if (user.userType === 'instructor') {
-            const lesson = await strapi.db.query('api::lesson.lesson').findOne({
-                where: { id: ctx.params.id },
+            const lessonId = await resolveNumericId(strapi, 'api::lesson.lesson', ctx.params.id);
+            const lesson = lessonId && await strapi.db.query('api::lesson.lesson').findOne({
+                where: { id: lessonId },
                 populate: ['course', 'course.instructor'],
             });
 

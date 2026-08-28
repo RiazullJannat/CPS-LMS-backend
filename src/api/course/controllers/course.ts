@@ -3,6 +3,7 @@
  */
 
 import { factories } from '@strapi/strapi';
+import { resolveNumericId } from '../../../utils/resolve-id';
 
 export default factories.createCoreController('api::course.course', ({ strapi }) => ({
     async update(ctx) {
@@ -11,15 +12,16 @@ export default factories.createCoreController('api::course.course', ({ strapi })
             return ctx.forbidden('You are not authorized to update this course');
         }
         if (user.userType === 'instructor') {
-            const course = await strapi.db.query('api::course.course').findOne({
-                where: { id: ctx.params.id },
+            const courseId = await resolveNumericId(strapi, 'api::course.course', ctx.params.id);
+            const course = courseId && await strapi.db.query('api::course.course').findOne({
+                where: { id: courseId },
                 populate: ['instructor']
             });
             if (!course || !course.instructor || course.instructor.id !== user.id) {
                 return ctx.forbidden('You are not the owner of this course');
             }
         }
-        return super.update(ctx); 
+        return super.update(ctx);
     },
 
     async delete(ctx) {
@@ -29,8 +31,9 @@ export default factories.createCoreController('api::course.course', ({ strapi })
         }
 
         if(user.userType === 'instructor') {
-            const course = await strapi.db.query('api::course.course').findOne({
-                where: { id: ctx.params.id },
+            const courseId = await resolveNumericId(strapi, 'api::course.course', ctx.params.id);
+            const course = courseId && await strapi.db.query('api::course.course').findOne({
+                where: { id: courseId },
                 populate: ['instructor']
             });
             if(!course || !course.instructor || course.instructor.id !== user.id) {

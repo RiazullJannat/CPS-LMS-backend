@@ -3,6 +3,7 @@
  */
 
 import { factories } from '@strapi/strapi';
+import { resolveNumericId } from '../../../utils/resolve-id';
 
 export default factories.createCoreController('api::lesson-progress.lesson-progress', ({ strapi }) => ({
     async create(ctx) {
@@ -11,9 +12,9 @@ export default factories.createCoreController('api::lesson-progress.lesson-progr
             return ctx.forbidden('Only students can mark progress');
         }
 
-        const lessonId = ctx.request.body.data.lesson;
+        const lessonId = await resolveNumericId(strapi, 'api::lesson.lesson', ctx.request.body.data.lesson);
 
-        const lesson = await strapi.db.query('api::lesson.lesson').findOne({
+        const lesson = lessonId && await strapi.db.query('api::lesson.lesson').findOne({
             where: { id: lessonId },
             populate: ['course'],
         });
@@ -58,7 +59,7 @@ export default factories.createCoreController('api::lesson-progress.lesson-progr
     },
     async getPercentage(ctx) {
         const user = ctx.state.user;
-        const courseId = ctx.params.courseId;
+        const courseId = await resolveNumericId(strapi, 'api::course.course', ctx.params.courseId);
 
         const totalLessons = await strapi.db.query('api::lesson.lesson').count({
             where: { course: courseId },

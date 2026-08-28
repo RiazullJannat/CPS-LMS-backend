@@ -1,0 +1,2304 @@
+{
+  "info": {
+    "_postman_id": "ee234484-df74-40a5-b7b8-5b0e1da65dba",
+    "name": "LMS Backend (Strapi)",
+    "description": "End-to-end auth + permission test suite for the Strapi LMS backend (course, lesson, enrollment, lesson-progress, quiz, quiz-result).\n\nRun order: 1 - Auth, then 2 through 7 in order (each folder depends on ids saved by earlier folders). Import postman_environment.json alongside this collection and select it as the active environment before running.\n\nAccess tokens expire after ~10 minutes \u2014 if a request unexpectedly returns 401, re-run the matching Login request in '1 - Auth'.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1 - Auth",
+      "item": [
+        {
+          "name": "Register - Student1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/local/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "local",
+                "register"
+              ]
+            },
+            "description": "Registers student1 with userType='student'. Saves the jwt into {{student_token}} and the user id into {{student_id}}. Safe to re-run: a 400 'already taken' response is treated as success (use the Login request below to fetch a fresh token in that case).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"student1\",\n  \"email\": \"student1@test.com\",\n  \"password\": \"Password123!\",\n  \"userType\": \"student\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200 (registered) or 400 (already exists)\", function () {",
+                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.test(\"Response contains a jwt\", function () {",
+                  "        pm.expect(json.jwt).to.be.a(\"string\");",
+                  "    });",
+                  "    pm.environment.set(\"student_token\", json.jwt);",
+                  "    pm.environment.set(\"student_id\", json.user.id);",
+                  "    pm.test(\"userType is 'student'\", function () {",
+                  "        pm.expect(json.user.userType).to.eql(\"student\");",
+                  "    });",
+                  "} else {",
+                  "    console.log(\"student1 already registered \u2014 run the matching Login request to (re)fetch a token.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Student1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/local",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "local"
+              ]
+            },
+            "description": "Logs in as student1 and refreshes {{student_token}}. Access tokens expire after ~10 minutes (jwtManagement: 'refresh' mode) \u2014 re-run this request any time a later request unexpectedly returns 401.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"student1@test.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response contains a jwt\", function () {",
+                  "    pm.expect(json.jwt).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"student_token\", json.jwt);",
+                  "pm.environment.set(\"student_id\", json.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - Instructor1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/local/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "local",
+                "register"
+              ]
+            },
+            "description": "Registers instructor1 with userType='instructor'. Saves the jwt into {{instructor1_token}} and the user id into {{instructor1_id}}. Safe to re-run: a 400 'already taken' response is treated as success (use the Login request below to fetch a fresh token in that case).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"instructor1\",\n  \"email\": \"instructor1@test.com\",\n  \"password\": \"Password123!\",\n  \"userType\": \"instructor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200 (registered) or 400 (already exists)\", function () {",
+                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.test(\"Response contains a jwt\", function () {",
+                  "        pm.expect(json.jwt).to.be.a(\"string\");",
+                  "    });",
+                  "    pm.environment.set(\"instructor1_token\", json.jwt);",
+                  "    pm.environment.set(\"instructor1_id\", json.user.id);",
+                  "    pm.test(\"userType is 'instructor'\", function () {",
+                  "        pm.expect(json.user.userType).to.eql(\"instructor\");",
+                  "    });",
+                  "} else {",
+                  "    console.log(\"instructor1 already registered \u2014 run the matching Login request to (re)fetch a token.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Instructor1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/local",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "local"
+              ]
+            },
+            "description": "Logs in as instructor1 and refreshes {{instructor1_token}}. Access tokens expire after ~10 minutes (jwtManagement: 'refresh' mode) \u2014 re-run this request any time a later request unexpectedly returns 401.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"instructor1@test.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response contains a jwt\", function () {",
+                  "    pm.expect(json.jwt).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"instructor1_token\", json.jwt);",
+                  "pm.environment.set(\"instructor1_id\", json.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - Instructor2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/local/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "local",
+                "register"
+              ]
+            },
+            "description": "Registers instructor2 with userType='instructor'. Saves the jwt into {{instructor2_token}} and the user id into {{instructor2_id}}. Safe to re-run: a 400 'already taken' response is treated as success (use the Login request below to fetch a fresh token in that case).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"instructor2\",\n  \"email\": \"instructor2@test.com\",\n  \"password\": \"Password123!\",\n  \"userType\": \"instructor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200 (registered) or 400 (already exists)\", function () {",
+                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.test(\"Response contains a jwt\", function () {",
+                  "        pm.expect(json.jwt).to.be.a(\"string\");",
+                  "    });",
+                  "    pm.environment.set(\"instructor2_token\", json.jwt);",
+                  "    pm.environment.set(\"instructor2_id\", json.user.id);",
+                  "    pm.test(\"userType is 'instructor'\", function () {",
+                  "        pm.expect(json.user.userType).to.eql(\"instructor\");",
+                  "    });",
+                  "} else {",
+                  "    console.log(\"instructor2 already registered \u2014 run the matching Login request to (re)fetch a token.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Instructor2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/local",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "local"
+              ]
+            },
+            "description": "Logs in as instructor2 and refreshes {{instructor2_token}}. Access tokens expire after ~10 minutes (jwtManagement: 'refresh' mode) \u2014 re-run this request any time a later request unexpectedly returns 401.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"instructor2@test.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response contains a jwt\", function () {",
+                  "    pm.expect(json.jwt).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"instructor2_token\", json.jwt);",
+                  "pm.environment.set(\"instructor2_id\", json.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - Content Manager1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/local/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "local",
+                "register"
+              ]
+            },
+            "description": "Registers content_manager1 with userType='content_manager'. Saves the jwt into {{content_manager_token}} and the user id into {{content_manager_id}}. Safe to re-run: a 400 'already taken' response is treated as success (use the Login request below to fetch a fresh token in that case).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"content_manager1\",\n  \"email\": \"content_manager1@test.com\",\n  \"password\": \"Password123!\",\n  \"userType\": \"content_manager\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200 (registered) or 400 (already exists)\", function () {",
+                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.test(\"Response contains a jwt\", function () {",
+                  "        pm.expect(json.jwt).to.be.a(\"string\");",
+                  "    });",
+                  "    pm.environment.set(\"content_manager_token\", json.jwt);",
+                  "    pm.environment.set(\"content_manager_id\", json.user.id);",
+                  "    pm.test(\"userType is 'content_manager'\", function () {",
+                  "        pm.expect(json.user.userType).to.eql(\"content_manager\");",
+                  "    });",
+                  "} else {",
+                  "    console.log(\"content_manager1 already registered \u2014 run the matching Login request to (re)fetch a token.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Content Manager1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/local",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "local"
+              ]
+            },
+            "description": "Logs in as content_manager1 and refreshes {{content_manager_token}}. Access tokens expire after ~10 minutes (jwtManagement: 'refresh' mode) \u2014 re-run this request any time a later request unexpectedly returns 401.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"content_manager1@test.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response contains a jwt\", function () {",
+                  "    pm.expect(json.jwt).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"content_manager_token\", json.jwt);",
+                  "pm.environment.set(\"content_manager_id\", json.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - Admin1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/local/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "local",
+                "register"
+              ]
+            },
+            "description": "Registers admin1 with userType='admin'. Saves the jwt into {{admin_token}} and the user id into {{admin_id}}. Safe to re-run: a 400 'already taken' response is treated as success (use the Login request below to fetch a fresh token in that case).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin1\",\n  \"email\": \"admin1@test.com\",\n  \"password\": \"Password123!\",\n  \"userType\": \"admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200 (registered) or 400 (already exists)\", function () {",
+                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.test(\"Response contains a jwt\", function () {",
+                  "        pm.expect(json.jwt).to.be.a(\"string\");",
+                  "    });",
+                  "    pm.environment.set(\"admin_token\", json.jwt);",
+                  "    pm.environment.set(\"admin_id\", json.user.id);",
+                  "    pm.test(\"userType is 'admin'\", function () {",
+                  "        pm.expect(json.user.userType).to.eql(\"admin\");",
+                  "    });",
+                  "} else {",
+                  "    console.log(\"admin1 already registered \u2014 run the matching Login request to (re)fetch a token.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Admin1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/local",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "local"
+              ]
+            },
+            "description": "Logs in as admin1 and refreshes {{admin_token}}. Access tokens expire after ~10 minutes (jwtManagement: 'refresh' mode) \u2014 re-run this request any time a later request unexpectedly returns 401.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"admin1@test.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response contains a jwt\", function () {",
+                  "    pm.expect(json.jwt).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"admin_token\", json.jwt);",
+                  "pm.environment.set(\"admin_id\", json.user.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Registers and logs in the 5 test users. Run this folder first (top to bottom) \u2014 everything downstream depends on the *_token and *_id variables set here.\n\nNOTE: this project's config/plugins.ts explicitly allows `userType` as a register field (register.allowedFields) purely so this collection can self-register users at every access level. Do not ship that allowance to production as-is."
+    },
+    {
+      "name": "2 - Course",
+      "item": [
+        {
+          "name": "Course - Create as Student (expect 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/courses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"Test Course\",\n    \"description\": \"desc\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Course - Create as Instructor1 (expect 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/courses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor1_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"Test Course\",\n    \"description\": \"desc\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403 (only admin/content_manager may create)\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Course - Create as Content Manager (expect 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/courses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ]
+            },
+            "description": "Owned by instructor1 \u2014 used by Folder 3/6 'as owner' scenarios (lesson/quiz creation).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{content_manager_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"Intro to JavaScript\",\n    \"description\": \"Learn JavaScript basics\",\n    \"instructor\": \"{{instructor1_id}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response has a documentId\", function () {",
+                  "    pm.expect(json.data.documentId).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"course_id\", json.data.documentId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Course - Create Second Course assigned to Instructor2 (expect 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/courses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ]
+            },
+            "description": "Owned by instructor2 \u2014 used for the 'not owner' negative tests below and in Folder 3/6.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{content_manager_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"Intro to Python\",\n    \"description\": \"Learn Python basics\",\n    \"instructor\": \"{{instructor2_id}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response has a documentId\", function () {",
+                  "    pm.expect(json.data.documentId).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"course2_id\", json.data.documentId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Course - Get All as Student (expect 200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/courses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 (read is open)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response has a data array\", function () {",
+                  "    pm.expect(json.data).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Course - Update course_id as Instructor2 (not owner, expect 403)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/courses/{{course_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses",
+                "{{course_id}}"
+              ]
+            },
+            "description": "course_id is owned by instructor1 (see Folder 3), so instructor2 is the non-owner here. NOTE: the original spec named instructor1 for this negative case, but instructor1 IS the owner of course_id (required for the 'create lesson as owner' test in Folder 3) \u2014 using instructor2 instead preserves the intended 'non-owner update is forbidden' assertion without that contradiction.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor2_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"Hacked Title\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Course - Update course2_id as Instructor2 (owner, expect 200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/courses/{{course2_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses",
+                "{{course2_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor2_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"Intro to Python - Updated\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Title was updated\", function () {",
+                  "    pm.expect(json.data.title).to.eql(\"Intro to Python - Updated\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Course - Delete course2_id as Instructor1 (not owner, expect 403)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/courses/{{course2_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses",
+                "{{course2_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor1_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 - Lesson",
+      "item": [
+        {
+          "name": "Lesson - Create under course_id as Instructor1 (owner, expect 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lessons",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lessons"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor1_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"JS Variables\",\n    \"content\": \"Learn about variables in JavaScript\",\n    \"video_url\": \"https://example.com/video1\",\n    \"order\": 1,\n    \"course\": \"{{course_id}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response has a documentId\", function () {",
+                  "    pm.expect(json.data.documentId).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"lesson_id\", json.data.documentId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lesson - Create under course2_id as Instructor1 (not owner, expect 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lessons",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lessons"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor1_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"Py Variables\",\n    \"content\": \"Learn about variables in Python\",\n    \"video_url\": \"https://example.com/video2\",\n    \"order\": 1,\n    \"course\": \"{{course2_id}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lesson - Get All as Student (expect 200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/lessons",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lessons"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lesson - Update lesson_id as Instructor2 (not owner, expect 403)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lessons/{{lesson_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lessons",
+                "{{lesson_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor2_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"Hacked Lesson\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lesson - Delete lesson_id as Student (expect 403)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/lessons/{{lesson_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lessons",
+                "{{lesson_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 - Enrollment",
+      "item": [
+        {
+          "name": "Enrollment - Enroll in course_id as Student1 (expect 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/enrollments?populate=student",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "enrollments"
+              ],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "student"
+                }
+              ]
+            },
+            "description": "?populate=student is required to see the auto-assigned student in the response.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"course\": \"{{course_id}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response has a documentId\", function () {",
+                  "    pm.expect(json.data.documentId).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"enrollment_id\", json.data.documentId);",
+                  "",
+                  "pm.test(\"student is auto-assigned to the logged-in user (not client-supplied)\", function () {",
+                  "    pm.expect(String(json.data.student.id)).to.eql(String(pm.environment.get(\"student_id\")));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Enrollment - Get My Enrollments as Student1 (expect 200, only own)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/enrollments?populate=student",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "enrollments"
+              ],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "student"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "const studentId = String(pm.environment.get(\"student_id\"));",
+                  "pm.test(\"Every enrollment belongs to student1\", function () {",
+                  "    json.data.forEach(function (enrollment) {",
+                  "        pm.expect(String(enrollment.student.id)).to.eql(studentId);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Enrollment - Enroll as Instructor1 (expect 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/enrollments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "enrollments"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor1_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"course\": \"{{course_id}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403 (only students can enroll)\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5 - Lesson Progress",
+      "item": [
+        {
+          "name": "Lesson Progress - Setup: Create Lesson under course2 (as Instructor2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lessons",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lessons"
+              ]
+            },
+            "description": "Setup step, not part of the original spec's bullet list: student1 is enrolled in course_id but not course2_id, so this creates a lesson under course2_id purely to give the 'not enrolled' negative test below something real to target.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor2_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"Python Loops\",\n    \"content\": \"Learn loops in Python\",\n    \"video_url\": \"https://example.com/video3\",\n    \"order\": 1,\n    \"course\": \"{{course2_id}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.environment.set(\"lesson2_id\", json.data.documentId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lesson Progress - Mark lesson_id Complete as Student1 (enrolled, expect 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lesson-progresses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lesson-progresses"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"lesson\": \"{{lesson_id}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"completed is true\", function () {",
+                  "    pm.expect(json.data.completed).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lesson Progress - Mark Same Lesson Again (expect 400 already completed)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lesson-progresses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lesson-progresses"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"lesson\": \"{{lesson_id}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Error message mentions already completed\", function () {",
+                  "    pm.expect(json.error.message.toLowerCase()).to.include(\"already\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lesson Progress - Mark Lesson in Unenrolled Course (expect 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lesson-progresses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lesson-progresses"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"lesson\": \"{{lesson2_id}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lesson Progress - Get Percentage for course_id as Student1 (expect 200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/lesson-progresses/course/{{course_id}}/percentage",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lesson-progresses",
+                "course",
+                "{{course_id}}",
+                "percentage"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response has totalLessons/completedCount/percentage as numbers\", function () {",
+                  "    pm.expect(json.totalLessons).to.be.a(\"number\");",
+                  "    pm.expect(json.completedCount).to.be.a(\"number\");",
+                  "    pm.expect(json.percentage).to.be.a(\"number\");",
+                  "});",
+                  "pm.test(\"completedCount never exceeds totalLessons\", function () {",
+                  "    pm.expect(json.completedCount).to.be.at.most(json.totalLessons);",
+                  "});",
+                  "pm.test(\"percentage is 100 (the only lesson under course_id was just completed)\", function () {",
+                  "    pm.expect(json.percentage).to.eql(100);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6 - Quiz",
+      "item": [
+        {
+          "name": "Quiz - Create under course_id as Instructor1 (owner, expect 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/quizzes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "quizzes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor1_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"JavaScript Basics Quiz\",\n    \"course\": \"{{course_id}}\",\n    \"questions\": [\n      {\n        \"text\": \"What does JS stand for?\",\n        \"options\": [\n          \"JavaScript\",\n          \"JamScript\",\n          \"JScript\"\n        ],\n        \"correct_answer\": \"JavaScript\"\n      },\n      {\n        \"text\": \"2 + 2 = ?\",\n        \"options\": [\n          \"3\",\n          \"4\",\n          \"5\"\n        ],\n        \"correct_answer\": \"4\"\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response has a documentId\", function () {",
+                  "    pm.expect(json.data.documentId).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"quiz_id\", json.data.documentId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quiz - Create under course2_id as Instructor1 (not owner, expect 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/quizzes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "quizzes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor1_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"Python Basics Quiz\",\n    \"course\": \"{{course2_id}}\",\n    \"questions\": [\n      {\n        \"text\": \"print() is used to?\",\n        \"options\": [\n          \"output\",\n          \"input\"\n        ],\n        \"correct_answer\": \"output\"\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quiz - Get quiz_id as Student1 (expect 200, no correct_answer)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/quizzes/{{quiz_id}}?populate=questions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "quizzes",
+                "{{quiz_id}}"
+              ],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "questions"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"questions array is present\", function () {",
+                  "    pm.expect(json.data.questions).to.be.an(\"array\").that.is.not.empty;",
+                  "});",
+                  "pm.test(\"No question exposes correct_answer to a student\", function () {",
+                  "    json.data.questions.forEach(function (q) {",
+                  "        pm.expect(q).to.not.have.property(\"correct_answer\");",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quiz - Get quiz_id as Instructor1 (expect 200, correct_answer present)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/quizzes/{{quiz_id}}?populate=questions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "quizzes",
+                "{{quiz_id}}"
+              ],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "questions"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor1_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Owner/staff view includes correct_answer on every question\", function () {",
+                  "    json.data.questions.forEach(function (q) {",
+                  "        pm.expect(q).to.have.property(\"correct_answer\");",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7 - Quiz Result",
+      "item": [
+        {
+          "name": "Quiz Result - Setup: Create Quiz under course2 (as Instructor2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/quizzes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "quizzes"
+              ]
+            },
+            "description": "Setup step, not part of the original spec's bullet list: gives the 'submit for a course student1 is not enrolled in' negative test below a real quiz to target (student1 is not enrolled in course2_id).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor2_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"Python Loops Quiz\",\n    \"course\": \"{{course2_id}}\",\n    \"questions\": [\n      {\n        \"text\": \"for loops iterate over?\",\n        \"options\": [\n          \"iterables\",\n          \"nothing\"\n        ],\n        \"correct_answer\": \"iterables\"\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.environment.set(\"quiz2_id\", json.data.documentId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quiz Result - Submit quiz_id as Student1 (mixed answers, expect 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/quiz-results",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "quiz-results"
+              ]
+            },
+            "description": "Question 0 answered correctly ('JavaScript'), question 1 answered incorrectly ('5' vs correct '4') \u2014 expected score is 1.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"quiz\": \"{{quiz_id}}\",\n    \"answers\": [\n      {\n        \"question_index\": 0,\n        \"selected\": \"JavaScript\"\n      },\n      {\n        \"question_index\": 1,\n        \"selected\": \"5\"\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"score matches expected correct-answer count (1 of 2)\", function () {",
+                  "    pm.expect(json.data.score).to.eql(1);",
+                  "    pm.expect(json.data.total_questions).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quiz Result - Submit quiz_id Again as Student1 (expect 400 already submitted)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/quiz-results",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "quiz-results"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"quiz\": \"{{quiz_id}}\",\n    \"answers\": [\n      {\n        \"question_index\": 0,\n        \"selected\": \"JavaScript\"\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Error message mentions already submitted\", function () {",
+                  "    pm.expect(json.error.message.toLowerCase()).to.include(\"already\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quiz Result - Submit for Unenrolled Course Quiz (expect 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/quiz-results",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "quiz-results"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"quiz\": \"{{quiz2_id}}\",\n    \"answers\": [\n      {\n        \"question_index\": 0,\n        \"selected\": \"iterables\"\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quiz Result - Get My Quiz Results as Student1 (expect 200, only own)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/quiz-results?populate=student",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "quiz-results"
+              ],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "student"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "const studentId = String(pm.environment.get(\"student_id\"));",
+                  "pm.test(\"Every quiz result belongs to student1\", function () {",
+                  "    json.data.forEach(function (result) {",
+                  "        pm.expect(String(result.student.id)).to.eql(studentId);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

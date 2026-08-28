@@ -3,6 +3,7 @@
  */
 
 import { factories } from '@strapi/strapi';
+import { resolveNumericId } from '../../../utils/resolve-id';
 
 export default factories.createCoreController('api::quiz-result.quiz-result', ({ strapi }) => ({
     async create(ctx) {
@@ -11,13 +12,13 @@ export default factories.createCoreController('api::quiz-result.quiz-result', ({
             return ctx.forbidden('Only students can submit quizzes');
         }
 
-        const quizId = ctx.request.body.data.quiz;
+        const quizId = await resolveNumericId(strapi, 'api::quiz.quiz', ctx.request.body.data.quiz);
         const submittedAnswers = ctx.request.body.data.answers; // e.g. [{ question_index: 0, selected: "Paris" }, ...]
 
         // আসল quiz + correct answers backend থেকে আনো, client কে trust কোরো না
-        const quiz = await strapi.db.query('api::quiz.quiz').findOne({
+        const quiz = quizId && await strapi.db.query('api::quiz.quiz').findOne({
             where: { id: quizId },
-            populate: ['course'],
+            populate: ['course', 'questions'],
         });
 
         if (!quiz) {
