@@ -32,18 +32,30 @@ export default {
       .findOne({ where: { type: 'authenticated' } });
 
     if (role) {
-      const action = 'plugin::users-permissions.user.find';
-      const existing = await strapi.db
-        .query('plugin::users-permissions.permission')
-        .findOne({ where: { action, role: role.id } });
+      // `plugin::users-permissions.user.find` — see the relation-write note above.
+      // `api::user-management.user-management.*` — custom routes are gated by the
+      // users-permissions plugin the same way core routes are: without an explicit
+      // permission row the Authenticated role gets 403 before the handler runs.
+      // These handlers each enforce `userType === 'admin'` themselves, so granting
+      // them to every authenticated user is safe — the controller is the real gate.
+      const actions = [
+        'plugin::users-permissions.user.find',
+        'api::user-management.user-management.getAllUsers',
+        'api::user-management.user-management.updateRole',
+        'api::user-management.user-management.adminCreateUser',
+      ];
 
-      if (!existing) {
-        await strapi.db.query('plugin::users-permissions.permission').create({
-          data: { action, role: role.id },
-        });
-        strapi.log.info(
-          `[bootstrap] Granted "${action}" to the Authenticated role (required for writing relations to the User model).`
-        );
+      for (const action of actions) {
+        const existing = await strapi.db
+          .query('plugin::users-permissions.permission')
+          .findOne({ where: { action, role: role.id } });
+
+        if (!existing) {
+          await strapi.db.query('plugin::users-permissions.permission').create({
+            data: { action, role: role.id },
+          });
+          strapi.log.info(`[bootstrap] Granted "${action}" to the Authenticated role.`);
+        }
       }
     }
   },
