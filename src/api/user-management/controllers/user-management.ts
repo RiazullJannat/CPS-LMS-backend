@@ -100,4 +100,18 @@ export default {
             return ctx.badRequest(message);
         }
     },
+    async getInstructors(ctx: Context) {
+        const user = ctx.state.user;
+
+        if (!user || !['admin', 'content_manager'].includes(user.userType)) {
+            return ctx.forbidden('Not authorized to view instructor list');
+        }
+
+        const instructors = await strapi.db.query('plugin::users-permissions.user').findMany({
+            where: { userType: 'instructor' },
+            select: ['id', 'username', 'email'],
+        });
+
+        ctx.body = { data: instructors };
+    },
 };

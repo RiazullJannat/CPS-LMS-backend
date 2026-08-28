@@ -18,5 +18,11 @@ export default {
             handler: 'user-management.adminCreateUser',
             config: { policies: [] },
         },
+        {
+            method: 'GET',
+            path: '/users/instructors',
+            handler: 'user-management.getInstructors',
+            config: { policies: [] },
+        },
     ],
 };

@@ -43,6 +43,7 @@ export default {
         'api::user-management.user-management.getAllUsers',
         'api::user-management.user-management.updateRole',
         'api::user-management.user-management.adminCreateUser',
+        'api::user-management.user-management.getInstructors',
       ];
 
       for (const action of actions) {
