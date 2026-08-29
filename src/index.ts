@@ -45,6 +45,7 @@ export default {
         'api::user-management.user-management.adminCreateUser',
         'api::user-management.user-management.getInstructors',
         'api::dashboard-stats.dashboard-stats.getStats',
+        'api::course-progress.course-progress.getStudentProgress',
       ];
 
       for (const action of actions) {
