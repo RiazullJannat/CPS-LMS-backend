@@ -2299,6 +2299,153 @@
           ]
         }
       ]
+    },
+    {
+      "name": "8 - Dashboard Stats",
+      "item": [
+        {
+          "name": "Dashboard Stats - Get as Admin (expect 200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard-stats",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "dashboard-stats"
+              ]
+            },
+            "description": "Platform-wide counts. Admin only — the controller checks userType === 'admin' before running any query.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response has a data object\", function () {",
+                  "    pm.expect(json.data).to.be.an(\"object\");",
+                  "});",
+                  "pm.test(\"users breakdown has all role counts + total as numbers\", function () {",
+                  "    pm.expect(json.data.users.students).to.be.a(\"number\");",
+                  "    pm.expect(json.data.users.instructors).to.be.a(\"number\");",
+                  "    pm.expect(json.data.users.contentManagers).to.be.a(\"number\");",
+                  "    pm.expect(json.data.users.admins).to.be.a(\"number\");",
+                  "    pm.expect(json.data.users.total).to.be.a(\"number\");",
+                  "});",
+                  "pm.test(\"users.total equals the sum of the role counts\", function () {",
+                  "    const u = json.data.users;",
+                  "    pm.expect(u.total).to.eql(u.students + u.instructors + u.contentManagers + u.admins);",
+                  "});",
+                  "pm.test(\"platform totals are present as numbers\", function () {",
+                  "    pm.expect(json.data.totalCourses).to.be.a(\"number\");",
+                  "    pm.expect(json.data.totalLessons).to.be.a(\"number\");",
+                  "    pm.expect(json.data.totalEnrollments).to.be.a(\"number\");",
+                  "    pm.expect(json.data.totalQuizzes).to.be.a(\"number\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dashboard Stats - Get as Student (expect 403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard-stats",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "dashboard-stats"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Error message mentions admin-only\", function () {",
+                  "    pm.expect(json.error.message.toLowerCase()).to.include(\"admin\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dashboard Stats - Get with No Auth (expect 403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard-stats",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "dashboard-stats"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Platform-wide dashboard stats (GET /api/dashboard-stats). Admin only. Depends on {{admin_token}} / {{student_token}} from Folder 1."
     }
   ]
 }

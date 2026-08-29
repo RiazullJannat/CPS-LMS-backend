@@ -44,6 +44,7 @@ export default {
         'api::user-management.user-management.updateRole',
         'api::user-management.user-management.adminCreateUser',
         'api::user-management.user-management.getInstructors',
+        'api::dashboard-stats.dashboard-stats.getStats',
       ];
 
       for (const action of actions) {
