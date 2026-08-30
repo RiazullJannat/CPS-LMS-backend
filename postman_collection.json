@@ -610,7 +610,7 @@
           ]
         }
       ],
-      "description": "Registers and logs in the 5 test users. Run this folder first (top to bottom) \u2014 everything downstream depends on the *_token and *_id variables set here.\n\nNOTE: this project's config/plugins.ts explicitly allows `userType` as a register field (register.allowedFields) purely so this collection can self-register users at every access level. Do not ship that allowance to production as-is."
+      "description": "Registers and logs in the 5 test users. Run this folder first (top to bottom) \u2014 everything downstream depends on the *_token and *_id variables set here.\n\nNOTE: config/plugins.ts sets register.allowedFields to [], so `userType` CANNOT be set via /api/auth/local/register \u2014 these Register requests send it only for documentation, and against a fresh database they return 400 \"Invalid parameters: userType\" (the test scripts tolerate that as an \"already exists\" outcome). Seed the non-student users out of band before running the suite: create the first admin via the Strapi admin panel, then use POST /api/users/admin-create (folder \"1 - Auth\" has no request for it) or a DB seed to make the instructor / content_manager / admin accounts. The public register flow only ever creates userType=student."
     },
     {
       "name": "2 - Course",
