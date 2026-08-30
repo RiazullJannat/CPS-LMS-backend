@@ -13,9 +13,9 @@ export default factories.createCoreController('api::quiz-result.quiz-result', ({
         }
 
         const quizId = await resolveNumericId(strapi, 'api::quiz.quiz', ctx.request.body.data.quiz);
-        const submittedAnswers = ctx.request.body.data.answers; // e.g. [{ question_index: 0, selected: "Paris" }, ...]
+        const submittedAnswers = ctx.request.body.data.answers;
 
-        // আসল quiz + correct answers backend থেকে আনো, client কে trust কোরো না
+        
         const quiz = quizId && await strapi.db.query('api::quiz.quiz').findOne({
             where: { id: quizId },
             populate: ['course', 'questions'],
@@ -25,7 +25,7 @@ export default factories.createCoreController('api::quiz-result.quiz-result', ({
             return ctx.notFound('Quiz not found');
         }
 
-        // Student ওই course এ enrolled কিনা check করো
+        // Student oi course a enrolled ki na check 
         const enrollment = await strapi.db.query('api::enrollment.enrollment').findOne({
             where: { student: user.id, course: quiz.course.id },
         });
@@ -33,7 +33,7 @@ export default factories.createCoreController('api::quiz-result.quiz-result', ({
             return ctx.forbidden('You are not enrolled in this course');
         }
 
-        // Retake আটকাতে চাইলে (single attempt) — এই check রাখো, নাহলে বাদ দাও
+        // Retake 
         const existing = await strapi.db.query('api::quiz-result.quiz-result').findOne({
             where: { student: user.id, quiz: quizId },
         });
@@ -41,7 +41,7 @@ export default factories.createCoreController('api::quiz-result.quiz-result', ({
             return ctx.badRequest('You have already submitted this quiz');
         }
 
-        // Auto-grade: backend এ থাকা correct_answer এর সাথে মিলিয়ে score বের করো
+        // Auto-grade 
         let score = 0;
         const gradedAnswers = quiz.questions.map((q: { correct_answer: any; }, index: any) => {
             const submitted = submittedAnswers.find((a: { question_index: any; }) => a.question_index === index);
